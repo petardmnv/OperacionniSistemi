@@ -14,7 +14,7 @@ int main(int argc, char *argv[]){
 	
 	int f;
 	
-	if ((f = open(argv[1], O_APPEND | O_CREAT | O_WRONLY)) == -1){
+	if ((f = open(argv[1], O_WRONLY)) == -1){
 		perror("first file open() failed: ");
 		return -1;
 	}
@@ -26,22 +26,38 @@ int main(int argc, char *argv[]){
 	}
 	
 	ssize_t secondread = 1;
+	ssize_t fwrite;
 	char buf;
+	off_t fseek = lseek(f, -1, SEEK_END);
+	if (fseek < 0){
+		perror("first file lseek() failed: ");
+		return -1;
+	}
 	while(secondread > 0){
 		secondread = read(s, &buf, 1);
 		
-		if (secondread < 0){
-			perror("read() failed: ");
-			return -1;
-		}
-		
-		if ((write(f, &buf, 1)) < 0){
-			perror("write() failed: ");
-			return -1;
+		if (buf != '\n'){
+			fwrite = write(f, &buf, 1);
+			if (fwrite < 0){
+				perror("write() failed: ");
+				return -1;
+			}
 		}
 	}
-	close(f);
-	close(s);
+	if (secondread < 0){
+		perror("read() failed: ");
+		return -1;
+	}
+	
+	if (close(f) == -1){
+		perror("first file close() failed: ");
+		return -1;
+	}
+	
+	if (close(s) == -1){
+		perror("second file close() failed: ");
+		return -1;
+	}
 	//Trqbva li da proverqvam dali sa se zatvorili failovete?
 	return 0;
 }
