@@ -8,8 +8,9 @@
 #define BUFFER 1024
 int main(int argc, char *argv[])
 {
-	if (argc < 2){
+	if (argc != 2){
 		printf("Usage: ./a.out file.txt \n");
+		return -1;
 	}
 	int fd;
 	
@@ -18,13 +19,26 @@ int main(int argc, char *argv[])
 		return -1;
 	}
 
-	int nread;
-	char buf[BUFFER + 1] = {0};
-	while((nread = read(fd, buf, BUFFER)) > 0){
-		write(STDOUT_FILENO, &buf, BUFFER);
+	int hread = 1;
+	int hwrite; 
+	char buf[BUFFER] = {0};
+	while((hread = read(fd, buf, BUFFER)) > 0){
+		
+		hwrite = write(STDOUT_FILENO, buf, BUFFER);
+		if (hwrite < 0){
+			perror("write() failed: ");
+			break;
+		}
+	}
+	if (hread < 0){
+		perror("read() failed: ");
+		return -1;
 	}
 	
-	close(fd);
+	if (close(fd) == -1){
+		perror("close() failed: ");
+		return -1;
+	}
 	
     return 0;
 }
