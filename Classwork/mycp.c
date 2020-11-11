@@ -9,8 +9,8 @@
 #define BUFFER 1024
 int main(int argc, char *argv[])
 {
-	if (argc != 2){
-		printf("Usage: ./a.out file.txt \n");
+	if (argc != 3){
+		printf("Usage: ./a.out resourcefile.txt resultfile.txt or path\n");
 		return -1;
 	}
 	int fd;
@@ -19,15 +19,20 @@ int main(int argc, char *argv[])
 		perror("open() failed: ");
 		return -1;
 	}
-
-	int hread;
-	int hwrite; 
+	
+	int nf;
+	//Polu4avam gre6ka kogato faila koito podam ne su6testvuva
+	//dori kogato izpolzvam i tazi komandi | O_CREAT | O_WRONLY
+	//mi kazva 4e nqmam prava nad faila
+	if ((nf = open(argv[2], O_WRONLY)) < 0){
+		perror("new file open() failed: ");
+		return -1;
+	}
+	ssize_t hread;
+	ssize_t hwrite; 
 	char buf[BUFFER] = {0};
 	while((hread = read(fd, buf, BUFFER)) > 0){
-		//Zapisah outputa v drug fail i fidqh 4e printira 1024 - strlen(buf)
-		// simvola - '\0'
-		//Taka 4e ve4e printira do strlen(buf)
-		hwrite = write(STDOUT_FILENO, buf, strlen(buf));
+		hwrite = write(nf, buf, strlen(buf));
 		if (hwrite < 0){
 			perror("write() failed: ");
 			break;

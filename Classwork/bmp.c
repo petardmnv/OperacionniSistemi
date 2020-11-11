@@ -8,7 +8,8 @@
 #define BUFFER 1024
 int main(int argc, char *argv[]){
 	if (argc != 2){
-		printf("Usage: ./a.out [bmp file]\n");
+		perror("Usage: ./a.out [bmp file]\n");
+		return -1;
 	}
 	
 	int fh;
@@ -22,12 +23,13 @@ int main(int argc, char *argv[]){
 	int bmp_height = 0;
 	int bmp_weight = 0;*/
 	
-	off_t  size = lseek(fh, 2, SEEK_SET);
+	off_t  size = lseek(fh, 22, SEEK_SET);
 	
 	int fread;
-	char buf[1025];
-	fread = read(fh, buf, 1024);
-	printf("%d\n", int(buf[size]));
+	char buf;
+	fread = read(fh, &buf, 1);
+	write(STDOUT_FILENO, &buf, 1);
+	
 	
 	close(fh);
 	return 0;
