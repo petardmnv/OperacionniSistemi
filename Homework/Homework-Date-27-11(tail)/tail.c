@@ -37,8 +37,8 @@ int open_file(char* file_path){
 	return fd;
 }
 //------------------------------------------------------------------------
-// FUNCTION: read_and_write
-// Does the main logic. Read from file descriptor and write into terminal 
+// FUNCTION: read_file
+// Does part of the main logic. Read from file descriptor and write into terminal 
 // PARAMETERS: fd - file descriptor, file_path - file path used in error handling.
 // 
 //------------------------------------------------------------------------
@@ -69,12 +69,17 @@ char * read_file(int fd, char* file_path){
 	}
 	return result;
 }
-
-int read_and_write(int fd, char* file_path){
+//------------------------------------------------------------------------
+// FUNCTION: write_file
+// Does part of the main logic. Read from file descriptor and write into terminal 
+// PARAMETERS: fd - file descriptor, file_path - file path used in error handling.
+// 
+//------------------------------------------------------------------------
+int write_file(int fd, char* file_path){
 	/*Some logic:
 	I have to print less or eq 10 lines
 	Data stored (? where ?):
-		result: str - but I will use malloc and realloc cuz I don't know the file size*/
+		result: str - I am using use malloc and realloc cuz I don't know the file size*/
 	char* result = read_file(fd, file_path);
 
 	if (result == NULL){
@@ -118,16 +123,12 @@ int read_and_write(int fd, char* file_path){
 	return 0;
 }
 
-int print(int fd, char* file_path){
+void print(int fd, char* file_path){
 	char first_spliter[4] = "==> ";
 	char second_spliter[5] = " <==\n";
 	write(STDOUT_FILENO, &first_spliter, 4);
 	write(STDOUT_FILENO, file_path, strlen(file_path));
 	write(STDOUT_FILENO, &second_spliter, 5);
-	if (read_and_write(fd, file_path) == -1){
-		return -1;
-	}
-	return 0;
 }
 
 int close_file(int fd, char* file_path){
@@ -152,21 +153,30 @@ int main(int argc, char *argv[]){
 	close ... 
 	check if close ok
 	*/
+	char new_line = '\n';
+
+
 	for (int i = 0; i < argc - 1; ++i){
 		char* path = argv[i + 1];
 		int fd;
 		if (strcmp(argv[i + 1], "-") == 0){
 			fd = 0;
-			path = "standard output";
+			path = "standard input";
 		}else{
 			if ((fd = open_file(path)) == -1){
 				continue;
 			}
 		}
-		if (print(fd, path) == -1){
+		if (argc != 2){
+			print(fd, path);
+		}
+		if (write_file(fd, path) == -1){
 			continue;
 		}
 		close_file(fd, path);
+		if (i < argc - 2){
+			write(STDOUT_FILENO, &new_line, 1);
+		}
 	}
 	return 0;
 }
