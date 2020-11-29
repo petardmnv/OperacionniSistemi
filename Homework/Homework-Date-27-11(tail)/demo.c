@@ -38,5 +38,9 @@ int main(int argc, char  *argv[])
 	strcat(res, "asdfghjkl");
 	printf("%s\n and size - %ld\n", res, strlen(res));
 	printf("Size: %d\n", size);*/
+	char* res;
+	res = "asdf";
+	res = "sdff";
+	printf("%s\n", res);
 	return 0;
 }

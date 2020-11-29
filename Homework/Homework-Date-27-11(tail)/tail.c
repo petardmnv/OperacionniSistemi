@@ -9,160 +9,77 @@
 
 #define MAXBUFF 1024
 //------------------------------------------------------------------------
-// NAME: Ivan Ivanov
-// CLASS: XIa
-// NUMBER: 13
+// NAME: Petar Damianov
+// CLASS: XIb
+// NUMBER: 21
 // PROBLEM: #1
-// FILE NAME: xxxxxx.yyy.zzz (unix file name)
-// FILE PURPOSE:
-// няколко реда, които описват накратко
-// предназначението на файла
+// FILE NAME: tail.c
+// FILE PURPOSE: Program that implements tail command
 // ...
 //------------------------------------------------------------------------
 
-
 //------------------------------------------------------------------------
-// FUNCTION: xxyyzz (име на функцията)
-// предназначение на функцията
-// PARAMETERS:
-// списък с параметрите на функцията
-// и тяхното значение
+// FUNCTION: open_file(char* file_path)
+// Opens file by given file_path.
+// PARAMETERS: file_path - file path needed in open().
+// 
 //------------------------------------------------------------------------
-
-
-
-//Output:
-/*$ tail a.txt b.txt
-==> a.txt <==
-two
-three
-four
-five
-six
-seven
-eight
-nine
-ten
-eleven
-
-==> b.txt <==
-1
-2
-3
-4
-5
-6
-7*/
-
-
-/*No file error - open failed:
-tail: cannot open 'aa' for reading: No such file or directory
-tail: cannot open 'bb' for reading: No such file or directory*/
-
-/* File read error:
-tail: error reading '/tmp/': Is a directory*/
-
-
-/*File write failed:
-tail: error writing 'standard output': No space left on device
-*/
-
-/*File close error
-tail: error reading 'b.txt': Input/output error
-*/
-
-
-/* operator "-":
-Do not understanding..... Going to cheat(;)}
-*/
-
-/* Lastly: MAKEFILE - Eazy 
-*/
-
-
 int open_file(char* file_path){
 	int fd;
-	char err[100] = "tail: cannot open '";
 	if ((fd = open(file_path, O_RDONLY)) == -1){
-		//This is retarded;(
+		//This is retarded:'(
+		char err[100] = "tail: cannot open '";
 		strcat(err, file_path);
-		strcat(err, "' for reading: ");
-		strcat(err, strerror(errno));
-		strcat(err, "\n");
-		write(STDERR_FILENO, err, 100);
+		strcat(err, "' for reading");
+		perror(err);
 		return -1;
 	}
 	return fd;
 }
-/*int read_file(char* file){
-	if (1){
-	}
-	return 0;
-}
-// write(){}*/
+//------------------------------------------------------------------------
+// FUNCTION: read_and_write
+// Does the main logic. Read from file descriptor and write into terminal 
+// PARAMETERS: fd - file descriptor, file_path - file path used in error handling.
+// 
+//------------------------------------------------------------------------
 
-int close_file(int fd, char* file_path){
-	char err[100] = "tail: error reading '";
-	if (close(fd) == -1){
-		//This is retarded;(
-		strcat(err, file_path);
-		strcat(err, "': ");
-		strcat(err, strerror(errno));
-		strcat(err, "\n");
-		write(STDERR_FILENO, err, 100);
-		return -1;
-	}
-	return 0;
-}
-int main(int argc, char *argv[]){
-	/*Program logic: 
-	open files
-	check if open ok
-	read from files
-	check if read ok
-	write ...
-	check if write ok
-	close ... 
-	check if close ok
-	...
-	*/
-	int fd[argc - 1];
-	for (int i = 1; i < argc; ++i){
-		fd[i - 1] = open_file(argv[i]);
-	}
-	/*Some logic:
-	Ihave to print less or eq 10 lines
-	Starting at the end of the file and counting new lines "\n" I thought that it would be easyar.
-	Data stored (? where ?):
-		result: str - but I don't know size of file so that is not gonna be OK in every case
-		so instead of crying I will use malloc and realloc)))
-
-	*/
+char * read_file(int fd, char* file_path){
 	int result_size = 1;
-	char* result = malloc(result_size * sizeof(result));
+	char* result = (char* ) malloc(result_size * sizeof(result));
 
 
 	ssize_t r;
 	char buff[MAXBUFF] = {0};
-	while((r = read(fd[0], buff, MAXBUFF)) > 0){
+	while((r = read(fd, buff, MAXBUFF)) > 0){
 		result_size += MAXBUFF;
-		result = realloc(result, (result_size) * sizeof(result));
+		result = (char* ) realloc(result, result_size * sizeof(result));
 		strcat(result, buff);
+		//buff clear
 		memset(buff, 0, MAXBUFF);
 
 	}
 
-	char err[100] = "tail: error reading '";
 	if (r == -1){
-		//This is retarded;(
+		//This is retarded:'(
+		char err[100] = "tail: error reading '";
 		strcat(err, file_path);
-		strcat(err, "': ");
-		strcat(err, strerror(errno));
-		strcat(err, "\n");
-		write(STDERR_FILENO, err, 100);
+		strcat(err, "'");
+		perror(err);
+		return NULL;
+	}
+	return result;
+}
+
+int read_and_write(int fd, char* file_path){
+	/*Some logic:
+	I have to print less or eq 10 lines
+	Data stored (? where ?):
+		result: str - but I will use malloc and realloc cuz I don't know the file size*/
+	char* result = read_file(fd, file_path);
+
+	if (result == NULL){
 		return -1;
 	}
-
 	int new_lines = 0;
 	int is_read = 0;
 	for (int i = strlen(result); i >= 0; --i){
@@ -170,24 +87,86 @@ int main(int argc, char *argv[]){
 			new_lines ++;
 		}
 		if (new_lines == 10){
-			ssize_t w = write(STDOUT_FILENO, result + i + 1, result_size);
-			if (w < 0){
-				perror("write2 failed.");
+			//This is bullshit:(
+			ssize_t w = write(STDOUT_FILENO, result + i + 1, strlen(result));
+			if (w == -1){
+				//This is retarded:'(
+				char err[100] = "tail: error writing '";
+				strcat(err, file_path);
+				strcat(err, "'");
+				perror(err);
+				return -1;
 			}
 			is_read = 1;
 			break;
 		}
 	}
 	if (is_read == 0){
-		ssize_t w = write(STDOUT_FILENO, result, result_size);
-		if (w < 0){
-			perror("write2 failed.");
+		ssize_t w = write(STDOUT_FILENO, result, strlen(result));
+		if (w == -1){
+			//This is retarded:'(
+			char err[100] = "tail: error writing '";
+			strcat(err, file_path);
+			strcat(err, "'");
+			perror(err);
+			return -1;
 		}
 	}
-
-	for (int i = 0; i < argc - 1; ++i){
-		close_file(fd[i], argv[i + 1]);
-	}
+	//clear result for the next function call. 
+	memset(result, 0, strlen(result));
 	free(result);
+	return 0;
+}
+
+int print(int fd, char* file_path){
+	char first_spliter[4] = "==> ";
+	char second_spliter[5] = " <==\n";
+	write(STDOUT_FILENO, &first_spliter, 4);
+	write(STDOUT_FILENO, file_path, strlen(file_path));
+	write(STDOUT_FILENO, &second_spliter, 5);
+	if (read_and_write(fd, file_path) == -1){
+		return -1;
+	}
+	return 0;
+}
+
+int close_file(int fd, char* file_path){
+	if (close(fd) == -1){
+		//This is retarded:'(
+		char err[100] = "tail: error reading '";
+		strcat(err, file_path);
+		strcat(err, "'");
+		perror(err);
+		return -1;
+	}
+	return 0;
+}
+int main(int argc, char *argv[]){
+	/*Basic program logic: 
+	open file
+	check if open ok
+	read from file
+	check if read ok
+	write ...
+	check if write ok
+	close ... 
+	check if close ok
+	*/
+	for (int i = 0; i < argc - 1; ++i){
+		char* path = argv[i + 1];
+		int fd;
+		if (strcmp(argv[i + 1], "-") == 0){
+			fd = 0;
+			path = "standard output";
+		}else{
+			if ((fd = open_file(path)) == -1){
+				continue;
+			}
+		}
+		if (print(fd, path) == -1){
+			continue;
+		}
+		close_file(fd, path);
+	}
 	return 0;
 }
