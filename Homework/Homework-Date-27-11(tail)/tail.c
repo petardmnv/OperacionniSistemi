@@ -19,7 +19,7 @@
 #define MAXBUFF 1024
 
 //------------------------------------------------------------------------
-// FUNCTION: open_file(char* file_path)
+// FUNCTION: open_file
 // Opens file by given file_path.
 // PARAMETERS: file_path - file path needed in open().
 // 
@@ -54,6 +54,7 @@ char * read_file(int fd, char* file_path){
 		result_size += strlen(buff);
 		result = (char* ) realloc(result, result_size);
 		strcat(result, buff);
+		memset(buff, 0, MAXBUFF);
 
 	}
 	if (r == -1){
@@ -87,12 +88,12 @@ int write_file(int fd, char* file_path){
 	if (result[strlen(result) - 1] == '\n'){
 		new_lines --;
 	}
-	for (int i = strlen(result); i >= 0; --i){
+	for (int i = strlen(result) - 1; i >= 0; --i){
 		if (result[i] == '\n'){
 			new_lines ++;
 		}
 		if (new_lines == 10){
-			//??????
+			//print the correct number of bytes from result
 			ssize_t w = write(STDOUT_FILENO, result + i + 1, strlen(result) - i - 1);
 			if (w == -1){
 				//This is retarded:'(
@@ -121,7 +122,7 @@ int write_file(int fd, char* file_path){
 	return 0;
 }
 //------------------------------------------------------------------------
-// FUNCTION: print_title()
+// FUNCTION: print_title
 // Prints ==> file_path <==
 // PARAMETERS: file_path - file path used in printing file name.
 // 
@@ -135,7 +136,7 @@ void print_title(char* file_path){
 }
 
 //------------------------------------------------------------------------
-// FUNCTION: close_file()
+// FUNCTION: close_file
 // Closes file by given file descriptor 
 // PARAMETERS: fd - file descriptor used for closing the file, file_path - file path used in error handling.
 // 
@@ -183,10 +184,15 @@ int main(int argc, char *argv[]){
 		if (argc != 2){
 			print_title(path);
 		}
+
 		if (write_file(fd, path) == -1){
 			continue;
 		}
-		close_file(fd, path);
+		
+		if (fd != 0){
+			close_file(fd, path);
+		}
+
 		if (i < argc - 2){
 			write(STDOUT_FILENO, &new_line, 1);
 		}
