@@ -94,8 +94,8 @@ int open_file(char* file_path){
 	return fd;
 }
 int read_file(int fd, char* file_path){
-	int result_size = 0;
-	char* result = "";
+	int result_size = 1;
+	char* result = malloc(result_size * sizeof(result));
 
 
 	ssize_t r;

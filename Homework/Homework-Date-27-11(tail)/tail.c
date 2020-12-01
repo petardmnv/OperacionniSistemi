@@ -1,3 +1,12 @@
+//------------------------------------------------------------------------
+// NAME: Petar Damianov
+// CLASS: XIb
+// NUMBER: 21
+// PROBLEM: #1
+// FILE NAME: tail.c
+// FILE PURPOSE: Program that implements tail command
+// ...
+//------------------------------------------------------------------------
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -8,15 +17,6 @@
 #include <stdlib.h>
 
 #define MAXBUFF 1024
-//------------------------------------------------------------------------
-// NAME: Petar Damianov
-// CLASS: XIb
-// NUMBER: 21
-// PROBLEM: #1
-// FILE NAME: tail.c
-// FILE PURPOSE: Program that implements tail command
-// ...
-//------------------------------------------------------------------------
 
 //------------------------------------------------------------------------
 // FUNCTION: open_file(char* file_path)
@@ -38,27 +38,24 @@ int open_file(char* file_path){
 }
 //------------------------------------------------------------------------
 // FUNCTION: read_file
-// Does part of the main logic. Read from file descriptor and write into terminal 
+// Does first part of the main logic. Read from file descriptor and write data from buff to result - returning value. 
 // PARAMETERS: fd - file descriptor, file_path - file path used in error handling.
 // 
 //------------------------------------------------------------------------
 
 char * read_file(int fd, char* file_path){
 	int result_size = 1;
-	char* result = (char* ) malloc(result_size * sizeof(result));
+	char* result = (char*) malloc(result_size);
 
 
 	ssize_t r;
 	char buff[MAXBUFF] = {0};
 	while((r = read(fd, buff, MAXBUFF)) > 0){
-		result_size += MAXBUFF;
-		result = (char* ) realloc(result, result_size * sizeof(result));
+		result_size += strlen(buff);
+		result = (char* ) realloc(result, result_size);
 		strcat(result, buff);
-		//buff clear
-		memset(buff, 0, MAXBUFF);
 
 	}
-
 	if (r == -1){
 		//This is retarded:'(
 		char err[100] = "tail: error reading '";
@@ -71,7 +68,7 @@ char * read_file(int fd, char* file_path){
 }
 //------------------------------------------------------------------------
 // FUNCTION: write_file
-// Does part of the main logic. Read from file descriptor and write into terminal 
+// Does second part of the main logic. Write into terminal from result. 
 // PARAMETERS: fd - file descriptor, file_path - file path used in error handling.
 // 
 //------------------------------------------------------------------------
@@ -79,7 +76,7 @@ int write_file(int fd, char* file_path){
 	/*Some logic:
 	I have to print less or eq 10 lines
 	Data stored (? where ?):
-		result: str - I am using use malloc and realloc cuz I don't know the file size*/
+		result: str - I am using use malloc and realloc cuz I am dumb ass*/
 	char* result = read_file(fd, file_path);
 
 	if (result == NULL){
@@ -87,13 +84,16 @@ int write_file(int fd, char* file_path){
 	}
 	int new_lines = 0;
 	int is_read = 0;
+	if (result[strlen(result) - 1] == '\n'){
+		new_lines --;
+	}
 	for (int i = strlen(result); i >= 0; --i){
 		if (result[i] == '\n'){
 			new_lines ++;
 		}
 		if (new_lines == 10){
-			//This is bullshit:(
-			ssize_t w = write(STDOUT_FILENO, result + i + 1, strlen(result));
+			//??????
+			ssize_t w = write(STDOUT_FILENO, result + i + 1, strlen(result) - i - 1);
 			if (w == -1){
 				//This is retarded:'(
 				char err[100] = "tail: error writing '";
@@ -117,13 +117,16 @@ int write_file(int fd, char* file_path){
 			return -1;
 		}
 	}
-	//clear result for the next function call. 
-	memset(result, 0, strlen(result));
 	free(result);
 	return 0;
 }
-
-void print(int fd, char* file_path){
+//------------------------------------------------------------------------
+// FUNCTION: print_title()
+// Prints ==> file_path <==
+// PARAMETERS: file_path - file path used in printing file name.
+// 
+//------------------------------------------------------------------------
+void print_title(char* file_path){
 	char first_spliter[4] = "==> ";
 	char second_spliter[5] = " <==\n";
 	write(STDOUT_FILENO, &first_spliter, 4);
@@ -131,6 +134,12 @@ void print(int fd, char* file_path){
 	write(STDOUT_FILENO, &second_spliter, 5);
 }
 
+//------------------------------------------------------------------------
+// FUNCTION: close_file()
+// Closes file by given file descriptor 
+// PARAMETERS: fd - file descriptor used for closing the file, file_path - file path used in error handling.
+// 
+//------------------------------------------------------------------------
 int close_file(int fd, char* file_path){
 	if (close(fd) == -1){
 		//This is retarded:'(
@@ -154,6 +163,10 @@ int main(int argc, char *argv[]){
 	check if close ok
 	*/
 	char new_line = '\n';
+	// tail without arguments
+	if (argc == 1){
+		write_file(0, "standart input");
+	}
 
 
 	for (int i = 0; i < argc - 1; ++i){
@@ -168,7 +181,7 @@ int main(int argc, char *argv[]){
 			}
 		}
 		if (argc != 2){
-			print(fd, path);
+			print_title(path);
 		}
 		if (write_file(fd, path) == -1){
 			continue;
