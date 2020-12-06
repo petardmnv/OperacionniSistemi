@@ -26,6 +26,8 @@
 //------------------------------------------------------------------------
 int open_file(char* file_path){
 	int fd;
+	// ciganiq ama ko da se pravi
+	int count = 0;
 	if ((fd = open(file_path, O_RDONLY)) == -1){
 		//This is retarded:'(
 		char err[100] = "tail: cannot open '";
@@ -43,7 +45,7 @@ int open_file(char* file_path){
 // 
 //------------------------------------------------------------------------
 
-char * read_file(int fd, char* file_path){
+char* read_file(int fd, char* file_path){
 	int result_size = 1;
 	char* result = (char*) malloc(result_size);
 
@@ -52,7 +54,7 @@ char * read_file(int fd, char* file_path){
 	char buff[MAXBUFF] = {0};
 	while((r = read(fd, buff, MAXBUFF)) > 0){
 		result_size += strlen(buff);
-		result = (char* ) realloc(result, result_size);
+		result = (char*) realloc(result, result_size);
 		strcat(result, buff);
 		memset(buff, 0, MAXBUFF);
 
@@ -119,6 +121,7 @@ int write_file(int fd, char* file_path){
 		}
 	}
 	free(result);
+	result = NULL;
 	return 0;
 }
 //------------------------------------------------------------------------
