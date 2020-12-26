@@ -47,6 +47,7 @@ char **parse_cmdline(const char *cmdline){
 	}
 
 	parsed_string = (char**) realloc(parsed_string, sizeof(char*) * (parsing_count + 1));
+	parsed_string[parsing_count] = malloc(sizeof(NULL));
 	parsed_string[parsing_count] = NULL;
 
 	return parsed_string;
@@ -61,9 +62,7 @@ char **parse_cmdline(const char *cmdline){
 //------------------------------------------------------------------------
 void print_dollar(){
 	char dollar_sign[3] = "$ ";
-	if ((write(0, &dollar_sign, 2)) < 0){
-		perror("write");
-	}
+	write(STDOUT_FILENO, &dollar_sign, 2);
 }
 
 int main(int argc, char const *argv[]){
@@ -83,7 +82,7 @@ int main(int argc, char const *argv[]){
 			status = -1;
 			perror("fork");
 		}else if (pid == 0){
-			char **arguments = parse_cmdline(buff); 
+			char **arguments = parse_cmdline(buff);
 			int returned_status = execvp(arguments[0], arguments);
 			if (returned_status == -1){
 				perror(arguments[0]);
