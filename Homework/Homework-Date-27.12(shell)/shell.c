@@ -1,3 +1,14 @@
+//------------------------------------------------------------------------
+// NAME: Petar Damianov
+// CLASS: XIb
+// NUMBER: 21
+// PROBLEM: #1
+// FILE NAME: shell.c
+// FILE PURPOSE: Program that implements shell interpreter
+// ...
+//------------------------------------------------------------------------
+
+
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -6,8 +17,13 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <string.h>
-#define BUFF 10
 
+//------------------------------------------------------------------------
+// FUNCTION: **parse_cmdline
+// converts C-string to C-strings
+// PARAMETERS: const char *cmdline - comands read from terminal 
+// 
+//------------------------------------------------------------------------
 char **parse_cmdline(const char *cmdline){
 	char split_by[3] = " \n";
 
@@ -36,47 +52,52 @@ char **parse_cmdline(const char *cmdline){
 	return parsed_string;
 }
 
+
+//------------------------------------------------------------------------
+// FUNCTION: print_dollar
+// prints dollar sigh
+// PARAMETERS: N/A
+// 
+//------------------------------------------------------------------------
+void print_dollar(){
+	char dollar_sign[3] = "$ ";
+	if ((write(0, &dollar_sign, 2)) < 0){
+		perror("write");
+	}
+}
+
 int main(int argc, char const *argv[]){
-	pid_t pid;
-	int status;
-	char dollar_sign[2] = "$";
-	write(0, &dollar_sign, 2);
-
-	//in function
-	char* buffer = 0;
-
-	ssize_t r;
-	char buff[BUFF] = {0};
-
-	char* result = (char*) malloc(sizeof(char*));
-	int result_size = 0;
-
-	while((r = read(0, buff, BUFF)) > 0){
-		if (r < 0){
-			perror("Read failed: ");
+	while(1){
+		print_dollar();
+		size_t b = 0;
+		char *buff = NULL;
+		if ((getline(&buff, &b, stdin)) == -1){
+			perror("read");
 			return -1;
 		}
-		result_size += r;
-		result = (char*) realloc(result, result_size * sizeof(char*));
-		strcat(result, buff);
-		memset(buff, 0, BUFF);
-	}
-	if (r < 0){
-		perror("Read failed: ");
-		return -1;
-	}
-	printf("%s\n", parse_cmdline(result)[2]);
-	pid = fork();
+		pid_t pid;
+		pid = fork();
+		int status;
 
-	if (pid < 0){
-		status = -1;
-		perror("fork: ");
-	}else if (pid == 0){
-		//#TODO
-		exit(0); 
-	}else {
-		waitpid();
+		if (pid < 0){
+			status = -1;
+			perror("fork");
+		}else if (pid == 0){
+			char **arguments = parse_cmdline(buff); 
+			int returned_status = execvp(arguments[0], arguments);
+			if (returned_status == -1){
+				perror(arguments[0]);
+				exit(-1);
+			}
+			exit(0); 
+		}else {
+			if (waitpid(pid, &status, 0) != pid){
+				status = -1;
+			}
+			if (status == -1){
+				perror("waitpid");
+			}
+		}
 	}
-	free(result);
 	return 0;
 }
