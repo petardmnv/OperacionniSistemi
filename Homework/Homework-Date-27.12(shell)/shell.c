@@ -20,12 +20,11 @@
 
 //------------------------------------------------------------------------
 // FUNCTION: **parse_cmdline
-// converts C-string to C-strings
+// converts C-string to C-strings using strtok:)
 // PARAMETERS: const char *cmdline - comands read from terminal 
 // 
 //------------------------------------------------------------------------
 char **parse_cmdline(const char *cmdline){
-
 	int cmdline_length = strlen(cmdline);
 	char *non_const_cmdline = malloc(cmdline_length);
 
@@ -51,6 +50,13 @@ char **parse_cmdline(const char *cmdline){
 	return parsed_string;
 }
 
+//------------------------------------------------------------------------
+// FUNCTION: main
+// Function does the main logic - creating process and executing commands from 
+// arguments using execvp. 
+// PARAMETERS: const char *cmdline - comands read from terminal 
+// 
+//------------------------------------------------------------------------
 int main(int argc, char const *argv[]){
 	while(1){
 		char *dollar_sign = "$ ";
@@ -83,7 +89,6 @@ int main(int argc, char const *argv[]){
 		}else {
 			if (waitpid(pid, &status, 0) != pid){
 				perror("waitpid");
-				return -1;
 			}
 		}
 		free(buff);
