@@ -121,41 +121,14 @@ int main(int argc, char *argv[])
 	for (int i = 0; i < mineral_blocks; ++i){
 		//#TODO
 		//Change to 500 now is 50
-		mineral_blocks_resourses[i] = 50;
+		mineral_blocks_resourses[i] = 500;
 	}
 
 	//#TODO
 	//Change to 500 now is 50
-	remaining_minerals = mineral_blocks * 50;
+	remaining_minerals = mineral_blocks * 500;
 
-	/*
-		Game starts:
-			- 2 mineral blocks 
-			- you could change mineral blocks
-			- Workers:
-				- 5 workers
-				- Worker can't mine from empty material block
-				- mining materials - before that print - "SCV N is mining from mineral block M" 3s for finding mine
-				- transport minerals to command center - 2s - "SCV N is transporting minerals"
-				- delivering materials - print - "SCV N delivered minerals to the Command center"
-				- On every mining miner mines 8 materials
-
-			- 20 Marines needed to finsh the game
-			- Comand Center:
-				- all workers deliver materials to command center(workers couldn't deliver materials at the same time)	
-				- player is typing commands while the program is runnung
-				- player can type - m for marine creation 
-				- marine creation costs - 50 minerals and 1s time for creation
-				- player can type - s for worker creation 
-				- worker creation costs 50 minerals and 4s for creation
-				- after marine is created console prints - "You wanna piece of me, boy?"
-
-		Game ends:
-			- console prints - "Map minerals N, player minerals M, SCVs X, Marines Y"
-
-	*/
-
-	pthread_t workers[workers_count];
+	pthread_t *workers = malloc(sizeof(pthread_t) * 5);
 
 	// Creating threads
 	for (int i = 0; i < workers_count; i++){
@@ -172,27 +145,58 @@ int main(int argc, char *argv[])
 	    }
 	}
 
+
+	int marines_count = 0;
+
+	while (remaining_minerals > 0 || marines_count < 20){
+		char input;
+		scanf("%c", &input);
+
+		if (input == 'm'){
+			if (mined_materials < 50){
+				printf("Not enough minerals\n");
+			}else{
+
+				mined_materials -= 50;
+				sleep(1);
+				printf("You wanna piece of me, boy?\n");
+				marines_count += 1;
+			}
+		}
+
+		if (input == 's'){
+
+			if (mined_materials < 50){
+				printf("Not enough minerals\n");
+			}else{
+
+				mined_materials -= 50;
+				sleep(4);
+				printf("SCV good to go, sir.\n");
+				workers_count += 1;
+			}
+			workers = realloc(workers, sizeof(pthread_t) * workers_count);
+
+			struct workerPack *pack = malloc(sizeof(struct workerPack));
+			pack->id = workers_count;
+			pack->resourses = mineral_blocks_resourses;
+			pack->mineral_blocks = mineral_blocks;
+
+			if(pthread_create(&(workers[workers_count - 1]), NULL, &work, (void*)pack)){
+		        printf("\n ERROR: worker pthread_create() has failed!\n");
+		       	return 1;
+		    }
+
+		}
+	}
+
+
 	for (int i = 0; i < workers_count; i++){
 		if (pthread_join(workers[i], NULL)) { 
 			printf("\n ERROR: worker pthread_join() has failed!\n"); 
 			exit(-1); 
 		}	
 	}
-
-
-	int marines_count = 0;
-
-	/*while (remaining_minerals > 0 && marines_count < 20){
-		char input;
-		scanf("%c", &input);
-
-		if (input == 'm'){
-			mined_materials -= 50;
-			sleep(1);
-			printf("You wanna piece of me, boy?\n");
-		}
-	}*/
-
 
 	// Mutex destroing
 	if (pthread_mutex_destroy(&lock)) { 
@@ -201,6 +205,8 @@ int main(int argc, char *argv[])
 	}
 
 
-	printf("Mined %d\n", mined_materials);
+	printf("Map minerals %d, player minerals %d, SCVs %d, Marines %d\n", mineral_blocks * 500, mined_materials, workers_count, marines_count);
+
+	free(mineral_blocks_resourses);
     return 0;
 }
