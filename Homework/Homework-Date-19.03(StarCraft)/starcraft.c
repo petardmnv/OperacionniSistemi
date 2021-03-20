@@ -24,76 +24,75 @@ struct workerPack{
 	int *resourses;
 };
 
+int remaining_minerals;
+int mined_materials = 0;
+
 /* THREAD 1 - worker*/
 void* work(void *pack){
+
     struct workerPack* p = (struct workerPack*)pack;
 
-    sleep(3);
-    for (int i = 0; i < p->mineral_blocks; ++i){
-    	if (p->resourses[i] < 8){
-    		sleep(3);
-    	}else{
-    		while(p->resourses[i] >= 8){
-		 		if (pthread_mutex_lock(&lock)) { 
-					printf("\n ERROR: mutex_lock() has failed!\n"); 
-					exit(-1);  
-				} 
+    while (remaining_minerals > 0){
 
-	    		printf("SCV %d is mining from mineral block %d\n", p->id, i + 1);
-	    		p->resourses[i] -= 8;
+	    for (int i = 0; i < p->mineral_blocks; ++i){
 
-	    		printf("SCV %d is transporting minerals\n", p->id);
-	    		if (pthread_mutex_unlock(&lock)) { 
-					printf("\n ERROR: mutex_unlock() has failed!\n"); 
-					exit(-1); 
+	    	if (p->resourses[i] > 0){
+	    		sleep(3);
+
+	    		while(p->resourses[i] > 0){
+
+			 		if (pthread_mutex_lock(&lock)) { 
+						printf("\n ERROR: mutex_lock() has failed!\n"); 
+						exit(-1);  
+					} 
+
+
+					//Mining minerals
+		    		printf("SCV %d is mining from mineral block %d\n", p->id, i + 1);
+
+
+		    		if (p->resourses[i] >= 8){
+			    		p->resourses[i] -= 8;
+		    			remaining_minerals -= 8;
+		    			mined_materials += 8;
+
+		    		}else{
+		    			mined_materials += p->resourses[i];
+		    			remaining_minerals -= p->resourses[i];
+		    			p->resourses[i] = 0;
+		    		}
+
+
+		    		//Transporting minerals
+		    		printf("SCV %d is transporting minerals\n", p->id);
+		    		if (pthread_mutex_unlock(&lock)) { 
+						printf("\n ERROR: mutex_unlock() has failed!\n"); 
+						exit(-1); 
+					}	
+
+					sleep(2);
+
+
+			 		if (pthread_mutex_lock(&lock)) { 
+						printf("\n ERROR: mutex_lock() has failed!\n"); 
+						exit(-1);  
+					} 
+
+					// Delivering minerals
+					printf("SCV %d delivered minerals to the Command center\n", p->id);
+
+
+					if (pthread_mutex_unlock(&lock)) { 
+						printf("\n ERROR: mutex_unlock() has failed!\n"); 
+						exit(-1); 
+					}
 				}	
-
-				sleep(2);
-
-		 		if (pthread_mutex_lock(&lock)) { 
-					printf("\n ERROR: mutex_lock() has failed!\n"); 
-					exit(-1);  
-				} 
-
-				printf("SCV %d delivered minerals to the Command center\n", p->id);
-
-				if (pthread_mutex_unlock(&lock)) { 
-					printf("\n ERROR: mutex_unlock() has failed!\n"); 
-					exit(-1); 
-				}
-			}	
-    	}
-    }
+	    	}
+	    }
+	}
     free(p);
     return NULL;
 }
-
-/* THREAD 2 - merchant*/
-/*void* sell_gold(void *id){
-	int seller_id = *(int*) id;
-	for (int i = 0; i < 20; i++){
-
-		if (pthread_mutex_lock(&lock)) { 
-			printf("\n ERROR: mutex_lock() has failed!\n"); 
-			exit(-1);  
-		}
-
-	    if (Gold >= 10) {
-	    	Gold -= 10;
-	    	printf("Trader %d sold 10 gold\n", seller_id);
-	    }else {
-	    	printf("The warehouse is empty, cannot sell!\n");
-	    }
-
-	   	if (pthread_mutex_unlock(&lock)) { 
-			printf("\n ERROR: mutex_unlock() has failed!\n"); 
-			exit(-1); 
-		}
-	    sleep(2);
-	}
-    return NULL;
-}*/
-
 
 int main(int argc, char *argv[])
 {
@@ -118,12 +117,17 @@ int main(int argc, char *argv[])
 	}
 
 
-	int mineral_blocks_resourses[mineral_blocks];
+	int *mineral_blocks_resourses = malloc(sizeof(int) * mineral_blocks);
 	for (int i = 0; i < mineral_blocks; ++i){
 		//#TODO
-		//Change to 1000 now is 50
+		//Change to 500 now is 50
 		mineral_blocks_resourses[i] = 50;
 	}
+
+	//#TODO
+	//Change to 500 now is 50
+	remaining_minerals = mineral_blocks * 50;
+
 	/*
 		Game starts:
 			- 2 mineral blocks 
@@ -159,10 +163,7 @@ int main(int argc, char *argv[])
 
 		struct workerPack *pack = malloc(sizeof(struct workerPack));
 		pack->id = worker_id;
-		pack->resourses = malloc(sizeof(int) * mineral_blocks);
-		for (int j = 0; j < mineral_blocks; ++j){
-			pack->resourses[j] = mineral_blocks_resourses[j];
-		}
+		pack->resourses = mineral_blocks_resourses;
 		pack->mineral_blocks = mineral_blocks;
 
 		if(pthread_create(&(workers[i]), NULL, &work, (void*)pack)){
@@ -179,11 +180,27 @@ int main(int argc, char *argv[])
 	}
 
 
+	int marines_count = 0;
+
+	/*while (remaining_minerals > 0 && marines_count < 20){
+		char input;
+		scanf("%c", &input);
+
+		if (input == 'm'){
+			mined_materials -= 50;
+			sleep(1);
+			printf("You wanna piece of me, boy?\n");
+		}
+	}*/
+
+
 	// Mutex destroing
 	if (pthread_mutex_destroy(&lock)) { 
 		printf("\n ERROR: mutex_destroy() has failed!\n"); 
 		exit(-1); 
 	}
 
+
+	printf("Mined %d\n", mined_materials);
     return 0;
 }
