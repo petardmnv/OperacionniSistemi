@@ -1,8 +1,12 @@
 //--------------------------------------------
-// NAME: Petur Damianov
+// NAME: Petyr Damianov
 // CLASS: XI b
 // NUMBER: 21
-// PROBLEM: Miners
+// PROBLEM: Starcraft3
+// FILE NAME: starcraft3.c
+// FILE PURPOSE: representation of starcraft game
+// Homework. Using mutexes and threads we are suposed to make gamezz:()
+// ...
 //---------------------------------------------
 
 #include <pthread.h>
@@ -26,6 +30,15 @@ struct workerPack{
 
 int remaining_minerals;
 int mined_materials = 0;
+
+
+//--------------------------------------------
+// FUNCTION: void* work(void *pack)
+// function that implements workers functionality
+// PARAMETERS: void *pack
+// pack is used like structure 
+//----------------------------------------------
+
 
 /* THREAD 1 - worker*/
 void* work(void *pack){
@@ -105,6 +118,13 @@ void* work(void *pack){
     free(p);
     return NULL;
 }
+
+//--------------------------------------------
+// FUNCTION: int main(int argc, char *argv[])
+// main functionality of the game 
+// PARAMETERS: 
+// 
+//----------------------------------------------
 
 int main(int argc, char *argv[])
 {
@@ -216,5 +236,6 @@ int main(int argc, char *argv[])
 	printf("Map minerals %d, player minerals %d, SCVs %d, Marines %d\n", mineral_blocks * 500, mined_materials, workers_count, marines_count);
 
 	free(mineral_blocks_resourses);
+	free(workers);
     return 0;
 }
