@@ -34,12 +34,14 @@ void* work(void *pack){
 
     while (remaining_minerals > 0){
 
-	    for (int i = 0; i < p->mineral_blocks; ++i){
+	    for (int i = 0; i < p->mineral_blocks; i++){
 
 	    	if (p->resourses[i] > 0){
 	    		sleep(3);
 
 	    		while(p->resourses[i] > 0){
+
+	    			int tmp_mined_materials = 0;
 
 			 		if (pthread_mutex_lock(&lock)) { 
 						printf("\n ERROR: mutex_lock() has failed!\n"); 
@@ -48,23 +50,25 @@ void* work(void *pack){
 
 
 					//Mining minerals
-		    		printf("SCV %d is mining from mineral block %d\n", p->id, i + 1);
-
+					printf("SCV %d is mining from mineral block %d\n", p->id, i + 1);
 
 		    		if (p->resourses[i] >= 8){
+
 			    		p->resourses[i] -= 8;
 		    			remaining_minerals -= 8;
-		    			mined_materials += 8;
+		    			tmp_mined_materials = 8;
 
 		    		}else{
-		    			mined_materials += p->resourses[i];
+
 		    			remaining_minerals -= p->resourses[i];
+		    			tmp_mined_materials = p->resourses[i];
 		    			p->resourses[i] = 0;
 		    		}
 
 
 		    		//Transporting minerals
 		    		printf("SCV %d is transporting minerals\n", p->id);
+
 		    		if (pthread_mutex_unlock(&lock)) { 
 						printf("\n ERROR: mutex_unlock() has failed!\n"); 
 						exit(-1); 
@@ -80,6 +84,7 @@ void* work(void *pack){
 
 					// Delivering minerals
 					printf("SCV %d delivered minerals to the Command center\n", p->id);
+					mined_materials += tmp_mined_materials;
 
 
 					if (pthread_mutex_unlock(&lock)) { 
@@ -119,13 +124,9 @@ int main(int argc, char *argv[])
 
 	int *mineral_blocks_resourses = malloc(sizeof(int) * mineral_blocks);
 	for (int i = 0; i < mineral_blocks; ++i){
-		//#TODO
-		//Change to 500 now is 50
 		mineral_blocks_resourses[i] = 500;
 	}
 
-	//#TODO
-	//Change to 500 now is 50
 	remaining_minerals = mineral_blocks * 500;
 
 	pthread_t *workers = malloc(sizeof(pthread_t) * 5);
