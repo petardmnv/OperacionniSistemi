@@ -39,15 +39,23 @@ void* work(void *pack){
 	    	if (p->resourses[i] > 0){
 	    		sleep(3);
 
-	    		while(p->resourses[i] > 0){
-
+	    		while (p->resourses[i] > 0){
 	    			int tmp_mined_materials = 0;
 
 			 		if (pthread_mutex_lock(&lock)) { 
 						printf("\n ERROR: mutex_lock() has failed!\n"); 
 						exit(-1);  
 					} 
-
+					// After 3s remaining_materials could be zero 
+					if (p->resourses[i] == 0){
+						// in edge cases if you don't unlock mutex program will freeze
+						if (pthread_mutex_unlock(&lock)) { 
+							printf("\n ERROR: mutex_unlock() has failed!\n"); 
+							exit(-1); 
+						}	
+						// continue not break you know
+						continue;
+					}
 
 					//Mining minerals
 					printf("SCV %d is mining from mineral block %d\n", p->id, i + 1);
@@ -66,14 +74,13 @@ void* work(void *pack){
 		    		}
 
 
-		    		//Transporting minerals
-		    		printf("SCV %d is transporting minerals\n", p->id);
-
 		    		if (pthread_mutex_unlock(&lock)) { 
 						printf("\n ERROR: mutex_unlock() has failed!\n"); 
 						exit(-1); 
 					}	
 
+					//Transporting minerals
+		    		printf("SCV %d is transporting minerals\n", p->id);
 					sleep(2);
 
 
@@ -90,8 +97,8 @@ void* work(void *pack){
 					if (pthread_mutex_unlock(&lock)) { 
 						printf("\n ERROR: mutex_unlock() has failed!\n"); 
 						exit(-1); 
-					}
-				}	
+					}	
+	    		}
 	    	}
 	    }
 	}
