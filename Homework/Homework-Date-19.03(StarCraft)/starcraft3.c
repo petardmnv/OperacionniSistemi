@@ -103,8 +103,8 @@ void* work(void *pack){
 					} 
 
 					// Delivering minerals
-					printf("SCV %d delivered minerals to the Command center\n", p->id);
 					mined_materials += tmp_mined_materials;
+					printf("SCV %d delivered minerals to the Command center\n", p->id);
 
 
 					if (pthread_mutex_unlock(&lock)) { 
@@ -202,34 +202,44 @@ int main(int argc, char *argv[])
 				exit(-1); 
 			}
 			if (have_enough_minerals) {
-				printf("You wanna piece of me, boy?\n");
 				marines_count += 1;
 				sleep(1);
+				printf("You wanna piece of me, boy?\n");
 			}
 		}
 
 		if (input == 's'){
-
+			int have_enough_minerals = 0;
+	 		if (pthread_mutex_lock(&lock)) { 
+				printf("\n ERROR: mutex_lock() has failed!\n"); 
+				exit(-1);  
+			}
 			if (mined_materials < 50){
 				printf("Not enough minerals\n");
 			}else{
-
+				have_enough_minerals = 1;
 				mined_materials -= 50;
-				sleep(4);
-				printf("SCV good to go, sir.\n");
-				workers_count += 1;
 			}
-			workers = realloc(workers, sizeof(pthread_t) * workers_count);
+			if (pthread_mutex_unlock(&lock)) { 
+				printf("\n ERROR: mutex_unlock() has failed!\n"); 
+				exit(-1); 
+			}
+			if (have_enough_minerals){
+				sleep(4);
+				workers_count += 1;
+				workers = realloc(workers, sizeof(pthread_t) * workers_count);
 
-			struct workerPack *pack = malloc(sizeof(struct workerPack));
-			pack->id = workers_count;
-			pack->resourses = mineral_blocks_resourses;
-			pack->mineral_blocks = mineral_blocks;
+				struct workerPack *pack = malloc(sizeof(struct workerPack));
+				pack->id = workers_count;
+				pack->resourses = mineral_blocks_resourses;
+				pack->mineral_blocks = mineral_blocks;
 
-			if(pthread_create(&(workers[workers_count - 1]), NULL, &work, (void*)pack)){
-		        printf("\n ERROR: worker pthread_create() has failed!\n");
-		       	return 1;
-		    }
+				if(pthread_create(&(workers[workers_count - 1]), NULL, &work, (void*)pack)){
+			        printf("\n ERROR: worker pthread_create() has failed!\n");
+			       	return 1;
+			    }
+			    printf("SCV good to go, sir.\n");
+			}
 
 		}
 	}
