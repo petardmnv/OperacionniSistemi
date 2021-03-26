@@ -9,7 +9,7 @@
 // ...
 //---------------------------------------------
 
-#include <pthread.h>	
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,7 +36,7 @@ int mined_materials = 0;
 // FUNCTION: void* work(void *pack)
 // function that implements workers functionality
 // PARAMETERS: void *pack
-// pack is used like structure 
+// pack is used like structure because I want to have access to more variables
 //----------------------------------------------
 
 
@@ -45,32 +45,19 @@ void* work(void *pack){
 
     struct workerPack* p = (struct workerPack*)pack;
 
-    //while (remaining_minerals > 0){
+    while (remaining_minerals > 0){
 
 	    for (int i = 0; i < p->mineral_blocks; i++){
 
 	    	//get in mine
 	    	if (p->resourses[i] > 0){
 	    		sleep(3);
-
-	    		while (p->resourses[i] > 0){
-
-			 		if (pthread_mutex_lock(&lock)) { 
+	    		if (pthread_mutex_lock(&lock)) { 
 						printf("\n ERROR: mutex_lock() has failed!\n"); 
 						exit(-1);  
-					} 
-
+				} 
+	    		if (p->resourses[i] > 0){
 					int tmp_mined_materials = 8;
-
-					// After 3s remaining_materials could be zero 
-					if (p->resourses[i] <= 0){
-						// in edge cases if you don't unlock mutex, program will freeze
-						if (pthread_mutex_unlock(&lock)) { 
-							printf("\n ERROR: mutex_unlock() has failed!\n"); 
-							exit(-1); 
-						}	
-						break;
-					}
 
 					//Mining minerals
 					printf("SCV %d is mining from mineral block %d\n", p->id, i + 1);
@@ -85,7 +72,6 @@ void* work(void *pack){
 		    			tmp_mined_materials = p->resourses[i];
 		    			p->resourses[i] = 0;
 		    		}
-
 
 		    		if (pthread_mutex_unlock(&lock)) { 
 						printf("\n ERROR: mutex_unlock() has failed!\n"); 
@@ -106,18 +92,17 @@ void* work(void *pack){
 					mined_materials += tmp_mined_materials;
 					printf("SCV %d delivered minerals to the Command center\n", p->id);
 
-
-					if (pthread_mutex_unlock(&lock)) { 
-						printf("\n ERROR: mutex_unlock() has failed!\n"); 
-						exit(-1); 
-					}	
 	    		}
+				if (pthread_mutex_unlock(&lock)) { 
+					printf("\n ERROR: mutex_unlock() has failed!\n"); 
+					exit(-1); 
+				}	
 	    		if (remaining_minerals <= 0){
 	    			break;
 	    		}
 	    	}
 	    }
-	//}
+	}
     free(p);
     return NULL;
 }
@@ -159,7 +144,7 @@ int main(int argc, char *argv[])
 
 	remaining_minerals = mineral_blocks * 500;
 
-	pthread_t *workers = malloc(sizeof(pthread_t) * 5);
+	pthread_t *workers = malloc(sizeof(pthread_t) * workers_count);
 
 	// Creating threads
 	for (int i = 0; i < workers_count; i++){
