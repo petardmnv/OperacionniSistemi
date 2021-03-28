@@ -48,59 +48,56 @@ void* work(void *pack){
     while (remaining_minerals > 0){
 
 	    for (int i = 0; i < p->mineral_blocks; i++){
-
 	    	//get in mine
-	    	if (p->resourses[i] > 0){
-	    		sleep(3);
-	    		if (pthread_mutex_lock(&lock)) { 
-						printf("\n ERROR: mutex_lock() has failed!\n"); 
-						exit(-1);  
-				} 
-	    		if (p->resourses[i] > 0){
-					int tmp_mined_materials = 8;
+    		sleep(3);
+    		if (pthread_mutex_lock(&lock)) { 
+					printf("\n ERROR: mutex_lock() has failed!\n"); 
+					exit(-1);  
+			} 
+    		if (p->resourses[i] > 0){
+				int tmp_mined_materials = 8;
+				//printf("%d : %d\n", p->id, p->resourses[i]);
+				//Mining minerals
+				printf("SCV %d is mining from mineral block %d\n", p->id, i + 1);
 
-					//Mining minerals
-					printf("SCV %d is mining from mineral block %d\n", p->id, i + 1);
+	    		if (p->resourses[i] >= 8){
 
-		    		if (p->resourses[i] >= 8){
+		    		p->resourses[i] -= 8;
+	    			remaining_minerals -= 8;
+	    		}else{
 
-			    		p->resourses[i] -= 8;
-		    			remaining_minerals -= 8;
-		    		}else{
-
-		    			remaining_minerals -= p->resourses[i];
-		    			tmp_mined_materials = p->resourses[i];
-		    			p->resourses[i] = 0;
-		    		}
-
-		    		if (pthread_mutex_unlock(&lock)) { 
-						printf("\n ERROR: mutex_unlock() has failed!\n"); 
-						exit(-1); 
-					}	
-
-					//Transporting minerals
-		    		printf("SCV %d is transporting minerals\n", p->id);
-					sleep(2);
-
-
-			 		if (pthread_mutex_lock(&lock)) { 
-						printf("\n ERROR: mutex_lock() has failed!\n"); 
-						exit(-1);  
-					} 
-
-					// Delivering minerals
-					mined_materials += tmp_mined_materials;
-					printf("SCV %d delivered minerals to the Command center\n", p->id);
-
+	    			remaining_minerals -= p->resourses[i];
+	    			tmp_mined_materials = p->resourses[i];
+	    			p->resourses[i] = 0;
 	    		}
-				if (pthread_mutex_unlock(&lock)) { 
+
+	    		if (pthread_mutex_unlock(&lock)) { 
 					printf("\n ERROR: mutex_unlock() has failed!\n"); 
 					exit(-1); 
 				}	
-	    		if (remaining_minerals <= 0){
-	    			break;
-	    		}
-	    	}
+
+				//Transporting minerals
+	    		printf("SCV %d is transporting minerals\n", p->id);
+				sleep(2);
+
+
+		 		if (pthread_mutex_lock(&lock)) { 
+					printf("\n ERROR: mutex_lock() has failed!\n"); 
+					exit(-1);  
+				} 
+
+				// Delivering minerals
+				mined_materials += tmp_mined_materials;
+				printf("SCV %d delivered minerals to the Command center\n", p->id);
+
+    		}
+			if (pthread_mutex_unlock(&lock)) { 
+				printf("\n ERROR: mutex_unlock() has failed!\n"); 
+				exit(-1); 
+			}	
+    		if (remaining_minerals <= 0){
+    			break;
+    		}
 	    }
 	}
     free(p);
@@ -226,6 +223,10 @@ int main(int argc, char *argv[])
 			    printf("SCV good to go, sir.\n");
 			}
 
+		}
+
+		if (marines_count + workers_count >= 200){
+			break;
 		}
 	}
 
